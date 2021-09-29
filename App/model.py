@@ -61,6 +61,35 @@ def newCatalog():
     
     return catalog
 
+def newCatalogMapObras():
+
+ catalog = {'obras': None,
+               'obraIds': None,
+               'ConstituentID': None,
+               'Medium': None,
+               'DateAcquired': None}   
+
+ catalog['obras'] = lt.newList(estructuradatos)  
+
+ catalog['obraIds'] = mp.newMap(10000,
+                                   maptype='CHAINING',
+                                   loadfactor=4.0,
+                                   comparefunction=cmpArtworkByIDMap)
+ catalog['ConstituentID'] = mp.newMap(34500,
+                                  maptype='CHAINING',
+                                  loadfactor=4.0,
+                                  comparefunction=cmpArtworkByConstituentIDMap)
+ catalog['Medium'] = mp.newMap(34500,
+                                  maptype='CHAINING',
+                                  loadfactor=4.0,
+                                  comparefunction=compareObrasByMedium)
+ catalog['DateAcquired'] = mp.newMap(34500,
+                                  maptype='CHAINING',
+                                  loadfactor=4.0,
+                                  comparefunction=cmpArtworkByDateAcquired)
+                        
+ return catalog
+                                   
 # Funciones para agregar informacion al catalogo
 
 def cargarCatalogoArtistas(catalog, artistaName):
@@ -75,7 +104,7 @@ def cargarCatalogoObras(catalog, obraName):
     
   
     ltObras = catalog['obras']
-    obraNuevo = newObra(obraName["ObjectID"],obraName["Title"],obraName["ConstituentID"],obraName["Date"], obraName["Medium"], obraName["Dimensions"], obraName["CreditLine"],obraName["AccessionNumber"],obraName["Classification"],obraName["Department"], obraName["DateAcquired"],obraName["Cataloged"],obraName["URL"],obraName["Circumference (cm)"],obraName["Depth (cm)"],obraName["Diameter (cm)"], obraName["Height (cm)"],obraName["Length (cm)"],obraName["Weight (kg)"],obraName["Width (cm)"],obraName["Seat Height (cm)"],obraName["Duration (sec.)"])
+    obraNuevo = newObra(obraName["ObjectID"],obraName["Title"],obraName["ConstituentID"],obraName["Date"], obraName["Medium"]['key'], obraName["Dimensions"], obraName["CreditLine"],obraName["AccessionNumber"],obraName["Classification"],obraName["Department"], obraName["DateAcquired"],obraName["Cataloged"],obraName["URL"],obraName["Circumference (cm)"],obraName["Depth (cm)"],obraName["Diameter (cm)"], obraName["Height (cm)"],obraName["Length (cm)"],obraName["Weight (kg)"],obraName["Width (cm)"],obraName["Seat Height (cm)"],obraName["Duration (sec.)"])
     lt.addLast( ltObras, obraNuevo)    
 
 
@@ -231,6 +260,67 @@ def cmpObrasPorAño(obra1, obra2):
         rta =True
     return rta
 
+def cmpArtworkByID(artwork1,artwork2):
+    """
+    """
+    respuesta = False 
+    if artwork1['ObjectID'] < artwork2['ObjectID']:
+        respuesta = True 
+    return respuesta
+    
+def cmpArtworkByIDMap(keyname,ObjectID):
+    """
+    """
+    authentry = me.getKey(ObjectID)
+    if (keyname == authentry):
+        return 0
+    elif (keyname > authentry):
+        return 1
+    else:
+        return -1
+
+def cmpArtworkByConstituentID(artwork1,artwork2):
+    """
+    """
+    respuesta = False 
+    if artwork1['ConstituentID'] < artwork2['ConstituentID']:
+        respuesta = True 
+    return respuesta
+
+def cmpArtworkByConstituentIDMap(keyname,ConstituentID):
+    """
+    """
+    authentry = me.getKey(ConstituentID)
+    if (keyname == authentry):
+        return 0
+    elif (keyname > authentry):
+        return 1
+    else:
+        return -1
+
+def compareObrasByMedium(keyname, Medium):
+    """
+    Compara dos nombres de autor. El primero es una cadena
+    y el segundo un entry de un map
+    """
+    authentry = me.getKey(Medium)
+    if (keyname == authentry):
+        return 0
+    elif (keyname > authentry):
+        return 1
+    else:
+        return -1
+
+def cmpArtworkByDateAcquiredMap(keyname,DateAcquired):
+    """
+    """
+    authentry = me.getKey(DateAcquired)
+    if (keyname == authentry):
+        return 0
+    elif (keyname > authentry):
+        return 1
+    else:
+        return -1        
 def artistaportecnica(catalog,name):
     """
     recibe el nombre de un artista, adquiere el ID del artista, identifica las obras creadas con el ID, clasifica las obras por medio
