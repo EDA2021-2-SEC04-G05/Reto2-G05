@@ -73,7 +73,7 @@ def newCatalog():
     por los indices creados a continuacion.
     """
     catalog['artistas'] = lt.newList('SINGLE_LINKED', compareArtistaByName)
-    
+
     catalog['obras'] = lt.newList('SINGLE_LINKED', compareObraByName)
 
     """
@@ -130,7 +130,7 @@ def newArtista(name):
     y su promedio de ratings. Se crea una lista para guardar los
     libros de dicho autor.
     """
-    nombre = {'name': "",
+    author = {'name': "",
               "books": None,
               "average": 0,
               "average_rating": 0}
