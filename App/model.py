@@ -33,474 +33,544 @@ from DISClib.Algorithms.Sorting import shellsort as sa
 assert cf
 
 """
-Se define la estructura de un catálogo de videos. El catálogo tendrá dos listas, una para los videos, otra para las categorias de
-los mismos.
+Se define la estructura de un catálogo de libros.
+El catálogo tendrá tres listas, una para libros, otra para autores
+y otra para géneros
 """
 
 # Construccion de modelos
 
-def estructuradatos(opciones):
-    if opciones == 1:
-        temp = 'SINGLE_LINKED'
-    else:
-        temp = 'ARRAY_LIST'
-    return temp 
 
-def newCatalog(): 
-    """
-    Inicializa el catálogo de libros. Crea una lista vacia para guardar
-    todos los libros, adicionalmente, crea una lista vacia para los autores,
-    una lista vacia para los generos y una lista vacia para la asociación
-    generos y libros. Retorna el catalogo inicializado.
+def newCatalog():
+    """ Inicializa el catálogo de libros
+
+    Crea una lista vacia para guardar todos los libros
+
+    Se crean indices (Maps) por los siguientes criterios:
+    Autores
+    ID libros
+    Tags
+    Año de publicacion
+
+    Retorna el catalogo inicializado.
     """
     catalog = {'artistas': None,
-               'obras': None}
+               'artistamap':None,
+               'obras': None,
+               'artistaIds': None,
+               'obraIds':None,
+               'nombreArtista':None,
+               'nombreObra':None,
+               'obraMedium':None,
+               'artistaNationality':None,
+               'idArtistaObra':{},
+               'obrasporNacionalidad':{}}
 
-    catalog['artistas'] = lt.newList(estructuradatos,cmpfunction=compareartistas)
-    catalog['obras'] = lt.newList(estructuradatos)
+    """
+    Esta lista contiene todo los libros encontrados
+    en los archivos de carga.  Estos libros no estan
+    ordenados por ningun criterio.  Son referenciados
+    por los indices creados a continuacion.
+    """
+    catalog['artistas'] = lt.newList('SINGLE_LINKED', compareArtistaByName)
     
+    catalog['obras'] = lt.newList('SINGLE_LINKED', compareObraByName)
+
+    """
+    A continuacion se crean indices por diferentes criterios
+    para llegar a la informacion consultada.  Estos indices no
+    replican informacion, solo referencian los libros de la lista
+    creada en el paso anterior.
+    """
+
+    """
+    Este indice crea un map cuya llave es el identificador del libro
+    """
+    catalog['artistaIds'] = mp.newMap(15223,
+                                   maptype='CHAINING',
+                                   loadfactor=4.0,
+                                   comparefunction=compareArtistasIds)
+    #print(catalog['artistaIds'])
+    """
+    Este indice crea un map cuya llave es el autor del libro
+    """
+    catalog['obraIds'] = mp.newMap(138150,
+                                   maptype='CHAINING',
+                                   loadfactor=4.0,
+                                   comparefunction=compareObrasIds)
+   
+    catalog['obraMedium'] = mp.newMap(138150,
+                                   maptype='CHAINING',
+                                   loadfactor=4.0,
+                                   comparefunction=compareMediumByName)
+    
+    catalog['artistaNationality'] = mp.newMap(138150,
+                                   maptype='CHAINING',
+                                   loadfactor=4.0,
+                                   comparefunction=compareNationalityByName)
+    
+    catalog['artistamap'] = mp.newMap(138150,
+                                   maptype='CHAINING',
+                                   loadfactor=4.0,
+                                   comparefunction=compareArtistaByName)
+
+    """
+    catalog['idArtistaObra'] = mp.newMap(138150,
+                                   maptype='CHAINING',
+                                   loadfactor=4.0,
+                                   comparefunction=compareArtistaById)
+    """
     return catalog
-
-# Funciones para agregar informacion al catalogo
-
-def cargarCatalogoArtistas(catalog, artistaName):
-    
-  
-    ltArtistas = catalog['artistas']
-    artistaNuevo = newArtista(artistaName["ConstituentID"],artistaName["DisplayName"], artistaName["ArtistBio"], artistaName["Nationality"], artistaName["Gender"],artistaName["BeginDate"], artistaName["EndDate"],artistaName["Wiki QID"],artistaName["ULAN"])
-    lt.addLast(ltArtistas, artistaNuevo)
-
-
-def cargarCatalogoObras(catalog, obraName):
-    
-  
-    ltObras = catalog['obras']
-    obraNuevo = newObra(obraName["ObjectID"],obraName["Title"],obraName["ConstituentID"],obraName["Date"], obraName["Medium"], obraName["Dimensions"], obraName["CreditLine"],obraName["AccessionNumber"],obraName["Classification"],obraName["Department"], obraName["DateAcquired"],obraName["Cataloged"],obraName["URL"],obraName["Circumference (cm)"],obraName["Depth (cm)"],obraName["Diameter (cm)"], obraName["Height (cm)"],obraName["Length (cm)"],obraName["Weight (kg)"],obraName["Width (cm)"],obraName["Seat Height (cm)"],obraName["Duration (sec.)"])
-    lt.addLast( ltObras, obraNuevo)    
-
-
-def relacionArtistaObra(catalog,catalog2):
-    if catalog['artistas']['ConstituentID']==catalog2['obras']['ConstituentID']:
-        return True
-
-
-'''
- artistas= catalog['artistas']
- obras=catalog2['obras']
-
- artistas = sortConstituentID(artistas)
- obras=sortConstituentID(obras)
- i =0 
-
- while i <lt.size(artistas):
-     j=0
-     artista= lt.getElement(artistas,i)
-
-     while j< lt.size(obras):
-         obra=lt.getElement(obras,j)
-
-         if artista['ConstituentID'] == obra['ConstituentID']:
-             lt.addLast(artista['obra'],obra)
-             lt.addLast(obra['artista'],artista)
-         j=+1
-     i=+1
-'''   
-
-def addArtista(catalog, artistaName):
-    """
-    Adiciona un autor a lista de autores, la cual guarda referencias
-    a los libros de dicho autor
-    """
-    ltArtistas = catalog['artistas']
-    artistaNuevo = newArtista(artistaName["ConstituentID"],artistaName["DisplayName"], artistaName["ArtistBio"], artistaName["Nationality"], artistaName["Gender"],artistaName["BeginDate"], artistaName["EndDate"],artistaName["Wiki QID"],artistaName["ULAN"])
-    print(artistaNuevo)
-    posartista = lt.isPresent(ltArtistas, artistaNuevo)
-    if posartista > 0:
-        artista = lt.getElement(ltArtistas, posartista)
-        return artista
-    else:
-        lt.addLast(ltArtistas, artistaNuevo)
-        return artistaNuevo
-
-
-def addObra(catalog, obraName):
-    
-    ltObras = catalog['obras']
-    obraNuevo = newObra(obraName["ObjectID"],obraName["Title"],obraName["ConstituentID"],obraName["Date"], obraName["Medium"], obraName["Dimensions"], obraName["CreditLine"],obraName["AccessionNumber"],obraName["Classification"],obraName["Department"], obraName["DateAcquired"],obraName["Cataloged"],obraName["URL"],obraName["Circumference (cm)"],obraName["Depth (cm)"],obraName["Diameter (cm)"], obraName["Height (cm)"],obraName["Length (cm)"],obraName["Weight (kg)"],obraName["Width (cm)"],obraName["Seat Height (cm)"],obraName["Duration (sec.)"])
-    print(obraNuevo) 
-    posobra = lt.isPresent(ltObras, obraNuevo)
-    if posobra > 0:
-        obra = lt.getElement(ltObras, posobra)
-        return obra
-    else:
-        lt.addLast(ltObras, obraNuevo)
-        return obraNuevo
 
 # Funciones para creacion de datos
 
-def newArtista(id,name,artistbio,nationality,gender,beginDate,endDate,wiki,ulan):
+def newArtista(name):
     """
-    Crea una nueva estructura para modelar los libros de
-    un autor y su promedio de ratings
+    Crea una nueva estructura para modelar los libros de un autor
+    y su promedio de ratings. Se crea una lista para guardar los
+    libros de dicho autor.
     """
-    artista = {'ConstituentID': "", 'DisplayName': "", "ArtistBio": "" , "Nationality": "", "Gender": "","BeginDate": ""  , "EndDate" : "", "Wiki QID": "", "ULAN": "" }
-    artista['ConstituentID'] = id
-    artista['DisplayName'] = name
-    artista['ArtistBio'] = artistbio
-    artista['Nationality'] = nationality
-    artista['Gender'] = gender
-    artista['BeginDate'] = int(beginDate)
-    artista['Nationality'] = nationality
-    artista['EndDate'] = int(endDate)
-    artista['ConstituentID'] = int(id)
-    artista['ArtistBio'] = artistbio
-    artista['WikiQID'] = wiki 
-    artista['ULAN'] = ulan 
-    #artista ['obra'] = lt.newList('ARRAY_LIST') 
-    return artista
+    nombre = {'name': "",
+              "books": None,
+              "average": 0,
+              "average_rating": 0}
+    author['name'] = name
+    author['books'] = lt.newList('SINGLE_LINKED', compareAuthorsByName)
+    return author
 
-def newObra(objectID,title,constituentID,date,medium,dimensions,creditLine,accessionNumber,classification,department,dateAcquired,cataloged,url,circumference,depth,diameter,height,length,weight,width,seatHeight,duration):
+def newAuthor(name):
     """
-    Crea una nueva estructura para modelar los libros de
-    un autor y su promedio de ratings
+    Crea una nueva estructura para modelar los libros de un autor
+    y su promedio de ratings. Se crea una lista para guardar los
+    libros de dicho autor.
     """
-    obra = {"ObjectID": "",'Title': "", "ConstituentID": "", "Date" : "", "Medium" : "", "Dimensions" : "", "CreditLine" : "", "AccessionNumber" : "", "Classification" : "", "Department": "", "DateAcquired" : "", "Cataloged": "", "URL" : "","Circumference (cm)": "","Depth (cm)": "", "Diameter (cm)": "","Height (cm)": "","Length (cm)": "","Weight (kg)": "","Width (cm)": "","Seat Height (cm)": "","Duration (sec.)": ""}
-    obra['ObjectID'] = objectID
-    obra['Title'] = title
-    obra['Date'] = date
-    obra['ConstituentID'] = constituentID
-    obra['Medium'] = medium
-    obra['Dimensions'] = dimensions
-    obra['CreditLine'] = creditLine
-    obra['Department'] = department
-    obra['DateAcquired'] = dateAcquired
-    #obra['ObjectID'] = objectID
-    obra['Diameter (cm)'] = diameter
-    obra['Circumference (cm)'] = circumference
-    obra['Depth (cm)'] = depth 
-    obra['AccessionNumber'] = accessionNumber
-    obra['Classification'] = classification 
-    obra['Cataloged'] = cataloged
-    obra['URL'] = url 
-    obra['Height (cm)'] = height
-    obra['Length (cm)'] = length
-    obra['Weight (cm)'] = weight
-    obra['Width (cm)'] = width
-    obra['Seat Height (cm)'] = seatHeight
-    obra['Duration (sec.)'] = duration
-    #obra['artista'] = lt.newList('ARRAY_LIST')
-    return obra   
- 
+    author = {'name': "",
+              "books": None,
+              "average": 0,
+              "average_rating": 0}
+    author['name'] = name
+    author['books'] = lt.newList('SINGLE_LINKED', compareAuthorsByName)
+    return author
 
+
+def newBookTag(name, id):
+    """
+    Esta estructura crea una relación entre un tag y los libros que han sido
+    marcados con dicho tag.  Se guarga el total de libros y una lista con
+    dichos libros.
+    """
+    tag = {'name': '',
+           'tag_id': '',
+           'total_books': 0,
+           'books': None,
+           'count': 0.0}
+    tag['name'] = name
+    tag['tag_id'] = id
+    tag['books'] = lt.newList()
+    return tag
+
+
+# Funciones para agregar informacion al catalogo
+
+def addArtista(catalog, artista):
+    """
+    Esta funcion adiciona un libro a la lista de libros,
+    adicionalmente lo guarda en un Map usando como llave su Id.
+    Adicionalmente se guarda en el indice de autores, una referencia
+    al libro.
+    Finalmente crea una entrada en el Map de años, para indicar que este
+    libro fue publicaco en ese año.
+    """
+    llave = artista['ConstituentID']
+    lt.addLast(catalog['artistas'], artista)
+    mp.put(catalog['artistaIds'], llave, artista)
+    nombre = artista['DisplayName'].split(",")  # Se() obtienen los nombres de los artistas
+    mp.put(catalog['artistamap'],nombre[0], artista)
+    nacionalidad = artista['Nationality']
+    try:
+        id=list(catalog["obrasporNacionalidad"].keys()).index(nacionalidad)
+    except:
+        id=-1
+    if id==-1:
+        catalog["obrasporNacionalidad"][nacionalidad]=[[artista["ConstituentID"]],[]]
+    else:
+        catalog["obrasporNacionalidad"][nacionalidad][0].append(artista["ConstituentID"])   
+    return nombre
+
+def addObra(catalog, obra):
+    """
+    Esta funcion adiciona un libro a la lista de libros,
+    adicionalmente lo guarda en un Map usando como llave su Id.
+    Adicionalmente se guarda en el indice de autores, una referencia
+    al libro.
+    Finalmente crea una entrada en el Map de años, para indicar que este
+    libro fue publicaco en ese año.
+    """
+    llave = obra['ObjectID'] 
+    lt.addLast(catalog['obras'], obra)
+    mp.put(catalog['obraIds'],llave, obra)
+    if type(obra['ConstituentID']) == str:
+            j = obra['ConstituentID'][1:-1].split(',')
+    for i in j: 
+        try: 
+            id = list(catalog['idArtistaObra'].keys()).index(i)
+        except:
+            id = - 1 
+        if id != -1:
+            catalog['idArtistaObra'][i].append(obra)
+        else:
+            catalog['idArtistaObra'][i] = [obra] 
+        for n in list(catalog["obrasporNacionalidad"].keys()):
+            for artistaid in catalog["obrasporNacionalidad"][n][0]:
+                if i==artistaid:
+                    catalog["obrasporNacionalidad"][n][1].append(obra)
+            #print(id,i)
+    nombre = obra['Title'].split(",")  # Se obtienen los nombres de las obras
+    return nombre
+
+def addBook(catalog, book):
+    """
+    Esta funcion adiciona un libro a la lista de libros,
+    adicionalmente lo guarda en un Map usando como llave su Id.
+    Adicionalmente se guarda en el indice de autores, una referencia
+    al libro.
+    Finalmente crea una entrada en el Map de años, para indicar que este
+    libro fue publicaco en ese año.
+    """
+    lt.addLast(catalog['books'], book)
+    mp.put(catalog['bookIds'], book['goodreads_book_id'], book)
+    nombre = book['authors'].split(",")  # Se obtienen los autores
+    return nombre
+
+def addBookYear(catalog, book):
+    """
+    Esta funcion adiciona un libro a la lista de libros que
+    fueron publicados en un año especifico.
+    Los años se guardan en un Map, donde la llave es el año
+    y el valor la lista de libros de ese año.
+    """
+    try:
+        years = catalog['years']
+        if (book['original_publication_year'] != ''):
+            pubyear = book['original_publication_year']
+            pubyear = int(float(pubyear))
+        else:
+            pubyear = 2020
+        existyear = mp.contains(years, pubyear)
+        if existyear:
+            entry = mp.get(years, pubyear)
+            year = me.getValue(entry)
+        else:
+            year = newYear(pubyear)
+            mp.put(years, pubyear, year)
+        lt.addLast(year['books'], book)
+    except Exception:
+        return None
+
+
+def newYear(pubyear):
+    """
+    Esta funcion crea la estructura de libros asociados
+    a un año.
+    """
+    entry = {'year': "", "books": None}
+    entry['year'] = pubyear
+    entry['books'] = lt.newList('SINGLE_LINKED', compareYears)
+    return entry
+
+
+def addBookAuthor(catalog, authorname, book):
+    """
+    Esta función adiciona un libro a la lista de libros publicados
+    por un autor.
+    Cuando se adiciona el libro se actualiza el promedio de dicho autor
+    """
+    authors = catalog['authors']
+    existauthor = mp.contains(authors, authorname)
+    if existauthor:
+        entry = mp.get(authors, authorname)
+        author = me.getValue(entry)
+    else:
+        author = newAuthor(authorname)
+        mp.put(authors, authorname, author)
+    lt.addLast(author['books'], book)
+    author['average'] += float(book['average_rating'])
+    totbooks = lt.size(author['books'])
+    if (totbooks > 0):
+        author['average_rating'] = author['average'] / totbooks
+
+
+def addTag(catalog, tag):
+    """
+    Adiciona un tag a la tabla de tags dentro del catalogo y se
+    actualiza el indice de identificadores del tag.
+    """
+    newtag = newBookTag(tag['tag_name'], tag['tag_id'])
+    mp.put(catalog['tags'], tag['tag_name'], newtag)
+    mp.put(catalog['tagIds'], tag['tag_id'], newtag)
+
+
+def addBookTag(catalog, tag):
+    """
+    Agrega una relación entre un libro y un tag.
+    Para ello se adiciona el libro a la lista de libros
+    del tag.
+    """
+    bookid = tag['goodreads_book_id']
+    tagid = tag['tag_id']
+    entry = mp.get(catalog['tagIds'], tagid)
+
+    if entry:
+        tagbook = mp.get(catalog['tags'], me.getValue(entry)['name'])
+        tagbook['value']['total_books'] += 1
+        tagbook['value']['count'] += int(tag['count'])
+        book = mp.get(catalog['bookIds'], bookid)
+        if book:
+            lt.addLast(tagbook['value']['books'], book['value'])
+
+def obraporNacionalidad(catalog,nacionalidad):
+    lista_nacionalidad = lt.newList()
+    for artista in catalog['artistas']:
+        if lt.isPresent(lista_nacionalidad,artista['Nationality']) == False:
+            lista_nacionalidad.append(artista['Nationality']) 
+    return len(lista_nacionalidad)
+
+# ==============================
 # Funciones de consulta
+# ==============================
 
-
-def sizesArtistas(catalog):
+def getObrasByNacionalidad(catalog, nombre):
     """
+    Retorna un autor con sus libros a partir del nombre del autor
+    """
+    nacionalidad = mp.get(catalog['artistaNationality'], nombre)
+    obras = None
+    if nacionalidad:
+        obras = me.getValue(nacionalidad)['obras']
+    return obras
+
+def getObrasByNacionalidad2(catalog, pais):
+    """
+    Retorna un autor con sus libros a partir del nombre del autor
+    """
+    try:
+        obras = catalog['obrasporNacionalidad'][pais][1]
+    except:
+        obras = None 
+    return obras 
+   
+def getObraByArtistaId(catalog, authorid):
+    """
+    Retorna un autor con sus libros a partir del nombre del autor
+    """
+    try: 
+        author = catalog['idArtistaObra'][authorid]
+    except:
+        author = None
+    return author 
+
+def getBooksByAuthor(catalog, authorname):
+    """
+    Retorna un autor con sus libros a partir del nombre del autor
+    """
+    author = mp.get(catalog['artistamap'], authorname) 
+    if author:
+        return me.getValue(author)
+    return None
+
+
+def getBooksByTag(catalog, tagname):
+    """
+    Retornar la lista de libros asociados a un tag
+    """
+    tag = mp.get(catalog['tags'], tagname)
+    books = None
+    if tag:
+        books = me.getValue(tag)['books']
+    return books
+
+
+def getBooksByYear(catalog, year):
+    """
+    Retorna los libros publicados en un año
+    """
+    year = mp.get(catalog['Date'], year)
+    if year:
+        return me.getValue(year)['books']
+    return None
+
+
+def artistaSize(catalog):
+    """
+    Número de libros en el catago
     """
     return lt.size(catalog['artistas'])
 
-def sizesObras(catalog):
-    """
-    """
-    return lt.size(catalog['obras'])
 
-# Funciones utilizadas para comparar elementos dentro de una lista
-
-def cmpArtworkByDateAcquired(artwork1,artwork2):
+def obraSize(catalog):
     """
-    Devuelve verdadero (True) si el DateAcquired de artwork1 < artwork2
-        Args: 
-        Artwork1: informacion de la primera obra de DateAcquired
-        Artwork2: informacion de la segunda obra de DateAcquired
+    Numero de autores en el catalogo
     """
-    respuesta = False 
-    if artwork1['DateAcquired'] < artwork2['DateAcquired']:
-        respuesta = True 
-    return respuesta
+    return mp.size(catalog['obras'])
 
-def cmpArtistasPorAño(artista1, artista2):
-    rta=False
-    if artista1['BeginDate'] < artista2['BeginDate']:
-        rta =True
-    return rta
 
-def cmpObrasPorAño(obra1, obra2):
-    rta=False
-    if obra1['Date'] < obra2['Date']:
-        rta =True
-    return rta
+# ==============================
+# Funciones de Comparacion
+# ==============================
 
-def artistaportecnica(catalog,name):
+def compareArtistasIds(id, entry):
     """
-    recibe el nombre de un artista, adquiere el ID del artista, identifica las obras creadas con el ID, clasifica las obras por medio
+    Compara dos ids de libros, id es un identificador
+    y entry una pareja llave-valor
     """
-    for artista in catalog['artistas']: 
-        if name == artista['DisplayName']:
-            id = artista['ConstituentID']
-            break 
-    lista = lt.newList()
-    for obra in catalog['obras']:
-        autores = obra['ConstituentID'][1:-1].split(',') 
-        for i in autores:
-            if i == id: 
-                lista.append(obra)
-    obraartista = len(lista) 
-    tecnica = lt.newList()
-    for j in lista: 
-        tec = j['Medium'] 
-        tecnica.append(tec)
-    tecnica2 = list(set(tecnica))
-    tecnicasartista = len(tecnica2)
-    reptecnica = lt.newList()
-    for k in tecnica2:
-        reptecnica.append(tecnica.count(k))
-    maximo = max(reptecnica)
-    indice = reptecnica.index(maximo)
-    masusada = tecnica2[indice] 
-# Funciones de ordenamiento
-
-def tipoSorter(opciones,lst):
-    if opciones == 0:
-        return insertionsort(lst)
-    elif opciones == 1:
-        return shellsort(lst)
-    elif opciones == 2:
-        return quicksort(lst)
+    identry = me.getKey(entry)
+    if (int(id) == int(identry)):
+        return 0
+    elif (int(id) > int(identry)):
+        return 1
     else:
-        print ("error")
+        return -1
 
-def insertionsort(lst):
-    size = lt.size(lst)
-    pos1 = 1
-    while pos1 <= size:
-        pos2 = pos1
-        while (pos2 > 1) and (cmpArtworkByDateAcquired(
-               lt.getElement(lst, pos2), lt.getElement(lst, pos2-1))):
-            lt.exchange(lst, pos2, pos2-1)
-            pos2 -= 1
-        pos1 += 1
-    return lst
-
-
-def shellsort(lst):
-    n = lt.size(lst)
-    h = 1
-    while h < n/3:   # primer gap. La lista se h-ordena con este tamaño
-        h = 3*h + 1
-    while (h >= 1):
-        for i in range(h, n):
-            j = i
-            while (j >= h) and cmpArtworkByDateAcquired(
-                                lt.getElement(lst, j+1),
-                                lt.getElement(lst, j-h+1)):
-                lt.exchange(lst, j+1, j-h+1)
-                j -= h
-        h //= 3    # h se decrementa en un tercio
-    return lst
-
-
-def quicksort(lst):
-    quicksort(lst, 1, lt.size(lst),cmpArtworkByDateAcquired)
-    return lst
-
-def InsercionOrdenarfechaobras(catalog):
-    size = lt.size(catalog['obras'])
-    pos1 = 1
-    while pos1 <= size:
-        pos2 = pos1                                                   
-        while (pos2 > 1) and (cmpArtworkByDateAcquired (lt.getElement(catalog['obras'], pos2), lt.getElement(catalog['obras'], pos2-1))):
-            lt.exchange(catalog['obras'], pos2, pos2-1)
-            pos2 -= 1
-        pos1 += 1
-    return catalog 
-
-def selectionsort(lst, cmpfunction):
-    size = lt.size(lst)
-    pos1 = 1
-    while pos1 < size:
-        minimum = pos1    # minimun tiene el menor elemento
-        pos2 = pos1 + 1
-        while (pos2 <= size):
-            if (cmpfunction(lt.getElement(lst, pos2),
-               (lt.getElement(lst, minimum)))):
-                minimum = pos2  # minimum = posición elemento más pequeño
-            pos2 += 1
-        lt.exchange(lst, pos1, minimum)  # elemento más pequeño -> elem pos1
-        pos1 += 1
-    return lst
-
-# funcion de ordenamiento - tiempo 
-"""
-def sortObras(catalog,opcion):
-    sub_list = lt.subList(catalog['obras'], 1, lt.size(catalog['obras']))
-    sub_list = sub_list.copy()
-    start_time = time.process_time()
-    sorted_list=tipoSorter(opcion, sub_list)
-    stop_time = time.process_time()
-    elapsed_time_mseg = (stop_time - start_time)*1000
-    return elapsed_time_mseg,sorted_list
-"""
-
-def mergeSort(lst, cmpfunction):
-    size = lt.size(lst)
-    if size > 1:
-        mid = (size // 2)
-        """se divide la lista original, en dos partes, izquierda y derecha,
-        desde el punto mid."""
-        leftlist = lt.subList(lst, 1, mid)
-        rightlist = lt.subList(lst, mid+1, size - mid)
-
-        """se hace el llamado recursivo con la lista izquierda y derecha"""
-        mergeSort(leftlist, cmpfunction)
-        mergeSort(rightlist, cmpfunction)
-
-        """i recorre la lista izquierda, j la derecha y k la lista original"""
-        i = j = k = 1
-
-        leftelements = lt.size(leftlist)
-        rightelements = lt.size(rightlist)
-
-        while (i <= leftelements) and (j <= rightelements):
-            elemi = lt.getElement(leftlist, i)
-            elemj = lt.getElement(rightlist, j)
-            """compara y ordena los elementos"""
-            if cmpfunction(elemj, elemi):   # caso estricto elemj < elemi
-                lt.changeInfo(lst, k, elemj)
-                j += 1
-            else:                            # caso elemi <= elemj
-                lt.changeInfo(lst, k, elemi)
-                i += 1
-            k += 1
-
-        """Agrega los elementos que no se comprararon y estan ordenados"""
-        while i <= leftelements:
-            lt.changeInfo(lst, k, lt.getElement(leftlist, i))
-            i += 1
-            k += 1
-
-        while j <= rightelements:
-            lt.changeInfo(lst, k, lt.getElement(rightlist, j))
-            j += 1
-            k += 1
-    return lst
-
-def sortConstituentID(lst):
-    size = lt.size(lst)
-    pos1 = 1
-    while pos1 <= size:
-        pos2 = pos1
-        while (pos2 > 1) and (cmpConstitudID(
-               lt.getElement(lst, pos2), lt.getElement(lst, pos2-1))):
-            lt.exchange(lst, pos2, pos2-1)
-            pos2 -= 1
-        pos1 += 1
-    return lst
-
-
-def getUltimosPrimerosTresArtistas(catalog,fechaInicio,fechaFin):
+def compareObrasIds(id, entry):
     """
+    Compara dos ids de libros, id es un identificador
+    y entry una pareja llave-valor
     """
-    artista = catalog['artistas']
-    listaOrdenada = mergeSort(artista,cmpArtistasPorAño)
-    i=0
-    posicioninicial= 0
-    posicionfinal= 0
-
-    while i < lt.size(listaOrdenada): 
-
-        artista1 = lt.getElement(listaOrdenada,i) 
-
-        if (artista1['BeginDate'] == fechaInicio or artista1['BeginDate'] > fechaInicio) and posicioninicial == 0: 
-            posicioninicial = i 
-
-        if artista1['BeginDate'] <= fechaFin:
-            posicionfinal = i
-        i =  i + 1
-
-    if posicionfinal == 0:
-        posicionfinal = i-1
-
-    elementos = (posicionfinal - posicioninicial + 1)
-
-    listainicial=lt.subList(listaOrdenada,posicioninicial,elementos) 
-
-    sublistaprimero3=lt.subList(listainicial,0,3) 
-    var =  lt.size(listainicial)
-    sublistaultimos3=lt.subList(listainicial,var-3,3)
- 
-    return([sublistaprimero3,sublistaultimos3]) 
-
-def getUltimosPrimerosTresObras(catalog,fechaInicio,fechaFin):
+    identry = me.getKey(entry)
+    if (int(id) == int(identry)):
+        return 0
+    elif (int(id) > int(identry)):
+        return 1
+    else:
+        return -1
+def compareArtistaById(id, entry):
     """
+    Compara dos ids de libros, id es un identificador
+    y entry una pareja llave-valor
     """
-    obra = catalog['obras']
-    listaOrdenada = mergeSort(obra,cmpObrasPorAño)
-    i=0
-    posicioninicial= 0
-    posicionfinal= 0
+    identry = me.getKey(entry)
+    if (int(id) == int(identry)):
+        return 0
+    elif (int(id) > int(identry)):
+        return 1
+    else:
+        return -1
+
+def compareMediumByName(name, medio):
+    """
+    Compara dos nombres de autor. El primero es una cadena
+    y el segundo un entry de un map
+    """
+    authentry = me.getKey(medio)
+    if (name == authentry):
+        return 0
+    elif (name > authentry):
+        return 1
+    else:
+        return -1
+
+def compareArtistaByName(name, artista):
+    """
+    Compara dos nombres de autor. El primero es una cadena
+    y el segundo un entry de un map
+    """
+    authentry = me.getKey(artista)
+    if (name == authentry):
+        return 0
+    elif (name > authentry):
+        return 1
+    else:
+        return -1
+
+def compareObraByName(name, obra):
+    """
+    Compara dos nombres de autor. El primero es una cadena
+    y el segundo un entry de un map
+    """
+    authentry = me.getKey(obra)
+    if (name == authentry):
+        return 0
+    elif (name > authentry):
+        return 1
+    else:
+        return -1
+
+def compareNationalityByName(name, nacionalidad):
+    """
+    Compara dos nombres de autor. El primero es una cadena
+    y el segundo un entry de un map
+    """
+    authentry = me.getKey(nacionalidad)
+    if (name == authentry):
+        return 0
+    elif (name > authentry):
+        return 1
+    else:
+        return -1
+
+def compareMapBookIds(id, entry):
+    """
+    Compara dos ids de libros, id es un identificador
+    y entry una pareja llave-valor
+    """
+    identry = me.getKey(entry)
+    if (int(id) == int(identry)):
+        return 0
+    elif (int(id) > int(identry)):
+        return 1
+    else:
+        return -1
 
 
-    while i < lt.size(listaOrdenada): 
+def compareAuthorsByName(keyname, author):
+    """
+    Compara dos nombres de autor. El primero es una cadena
+    y el segundo un entry de un map
+    """
+    authentry = me.getKey(author)
+    if (keyname == authentry):
+        return 0
+    elif (keyname > authentry):
+        return 1
+    else:
+        return -1
 
-        obra1 = lt.getElement(listaOrdenada,i) 
-        if obra1['Date'] != '':
-            fecha = int(obra1['Date'])
 
-            if (fecha > fechaInicio) and posicioninicial == 0: 
-                posicioninicial = i 
+def compareTagNames(name, tag):
+    tagentry = me.getKey(tag)
+    if (name == tagentry):
+        return 0
+    elif (name > tagentry):
+        return 1
+    else:
+        return -1
 
-            if fecha <= fechaFin:
-                posicionfinal = i
-        i =  i + 1
 
-    if posicionfinal == 0:
-        posicionfinal = i-1
+def compareTagIds(id, tag):
+    tagentry = me.getKey(tag)
+    if (int(id) == int(tagentry)):
+        return 0
+    elif (int(id) > int(tagentry)):
+        return 1
+    else:
+        return 0
 
-    elementos = (posicionfinal - posicioninicial + 1)
 
-    listainicial=lt.subList(listaOrdenada,posicioninicial,elementos) 
+def compareMapYear(id, tag):
+    tagentry = me.getKey(tag)
+    if (id == tagentry):
+        return 0
+    elif (id > tagentry):
+        return 1
+    else:
+        return 0
 
-    sublistaprimero3=lt.subList(listainicial,0,3) 
-    var =  lt.size(listainicial)
-    sublistaultimos3=lt.subList(listainicial,var-3,3)
- 
-    return([sublistaprimero3,sublistaultimos3]) 
-    sizelt=lt.size(listaOrdenada)
 
-    posicioninicial= 0
-   
-    found = False
-    posicion = 0
-
-    while  posicion < sizelt and not found:
-        artista1=lt.getElement(listaOrdenada,posicion)
-        
-        if artista1['BeginDate']<fechaInicio:
-            posicion =  posicion + 1
-
-        elif artista1['BeginDate']>=fechaInicio:
-            found = True
-            posicioninicial=posicion
-            
-    subLista1= lt.subList(listaOrdenada,posicioninicial,(sizelt-posicioninicial))
-
-    posicionfinal = 0
-    found2 = False
-    posicion2 = 0
-    sizelt2=lt.size(subLista1)
-
-    while  posicion2 < sizelt2 and not found2:
-        artista2=lt.getElement(subLista1,posicion2)
-        
-        if artista2['BeginDate']<=fechaFin:
-            posicion2 =  posicion2 + 1
-            posicionfinal=posicion2+1
-
-        if artista2['BeginDate']>fechaFin:
-         found2 = True
-         
-
-    subLista2=lt.subList(subLista1,0,posicionfinal)
-    return (subLista2)
+def compareYears(year1, year2):
+    if (int(year1) == int(year2)):
+        return 0
+    elif (int(year1) > int(year2)):
+        return 1
+    else:
+        return 0
 
