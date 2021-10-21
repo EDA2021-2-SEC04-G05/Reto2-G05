@@ -71,15 +71,25 @@ def loadArtworks(catalog):
 
 # Funciones de consulta sobre el catálogo
 
-def getUltimosPrimerosTresArtistas(catalog,fechaInicio,fechaFin):
+def concatlist(lst1,lst2):
+    lst = model.concatlist(lst1,lst2)
+    return lst
 
-    ultimastres= model.getUltimosPrimerosTresArtistas(catalog,fechaInicio,fechaFin)
-    return ultimastres
+def concatlist2(lst1,lst2):
+    lst = model.concatlist2(lst1,lst2)
+    return lst
 
-def getUltimosPrimerosTresObra(catalog,fechaInicio,fechaFin):
+def getArtistaByDate(catalog,year):
+    nacidos = model.getArtistaByDate(catalog,year)
+    return nacidos 
 
-    ultimastres= model.getUltimosPrimerosTresObras(catalog,fechaInicio,fechaFin)
-    return ultimastres
+def getObraByDate(catalog,year):
+    nacidos = model.getObraByDate(catalog,year)
+    return nacidos 
+
+def getObraByAcquisition(catalog,year):
+    obras = model.getObraByAcquisition(catalog,year)
+    return obras
 
 def getObrasByNacionalidad(catalog, nombre):
     """
@@ -92,6 +102,9 @@ def getObrasByNacionalidad2(catalog, pais):
     Retorna los libros que fueron etiquetados con el tag
     """
     return model.getObrasByNacionalidad2(catalog, pais)
+
+def getArtistaById(catalog,id):
+    return model.getArtistaById(catalog,id)
 
 def getBestBooks(catalog, number):
     """
@@ -124,20 +137,17 @@ def booksSize(catalog):
     """
     return model.booksSize(catalog)
 
-
 def authorsSize(catalog):
     """
     Numero de autores cargados al catalogo
     """
     return model.authorsSize(catalog)
 
-
 def tagsSize(catalog):
     """
     Numero de tags cargados al catalogo
     """
     return model.tagsSize(catalog)
-
 
 def getBooksByAuthor(catalog, authorname):
     """
@@ -160,7 +170,6 @@ def getBooksByTag(catalog, tagname):
     """
     books = model.getBooksByTag(catalog, tagname)
     return books
-
 
 def getBooksYear(catalog, year):
     """

@@ -63,6 +63,8 @@ def newCatalog():
                'nombreObra':None,
                'obraMedium':None,
                'artistaNationality':None,
+               'obraDate':None,
+               'obraAcquisition':None,
                'idArtistaObra':{},
                'obrasporNacionalidad':{}}
 
@@ -113,6 +115,21 @@ def newCatalog():
                                    maptype='CHAINING',
                                    loadfactor=4.0,
                                    comparefunction=compareArtistaByName)
+
+    catalog['artistaDate'] = mp.newMap(138150,
+                                   maptype='CHAINING',
+                                   loadfactor=4.0,
+                                   comparefunction=compareArtistaByName)
+    
+    catalog['obraDate'] = mp.newMap(138150,
+                                   maptype='CHAINING',
+                                   loadfactor=4.0,
+                                   comparefunction=compareObraByName)
+
+    catalog['obraAcquisition'] = mp.newMap(138150,
+                                   maptype='CHAINING',
+                                   loadfactor=4.0,
+                                   comparefunction=compareObraByName)
 
     """
     catalog['idArtistaObra'] = mp.newMap(138150,
@@ -195,7 +212,33 @@ def addArtista(catalog, artista):
         catalog["obrasporNacionalidad"][nacionalidad]=[[artista["ConstituentID"]],[]]
     else:
         catalog["obrasporNacionalidad"][nacionalidad][0].append(artista["ConstituentID"])   
-    return nombre
+    valor = artista['BeginDate'] 
+    addArtistaAnho(catalog, artista)
+
+def addArtistaAnho(catalog, artista):
+    """
+    Esta funcion adiciona un libro a la lista de libros que
+    fueron publicados en un año especifico.
+    Los años se guardan en un Map, donde la llave es el año
+    y el valor la lista de libros de ese año.
+    """
+    try:
+        years = catalog['artistaDate']
+        if (artista['BeginDate'] != ''):
+            fecha = artista['BeginDate']
+            fecha = int(float(fecha))
+        else:
+            fecha = 2020
+        existyear = mp.contains(years, fecha)
+        if existyear:
+            entry = mp.get(years, fecha)
+            year = me.getValue(entry)
+        else:
+            year = newYear(fecha)
+            mp.put(years, fecha, year)
+        lt.addLast(year['artistas'], artista)
+    except Exception:
+        return None
 
 def addObra(catalog, obra):
     """
@@ -226,7 +269,59 @@ def addObra(catalog, obra):
                     catalog["obrasporNacionalidad"][n][1].append(obra)
             #print(id,i)
     nombre = obra['Title'].split(",")  # Se obtienen los nombres de las obras
-    return nombre
+    #return nombre
+    addObraAnho(catalog, obra)
+    addObraAcquisition(catalog, obra)
+
+def addObraAnho(catalog, obra):
+    """
+    Esta funcion adiciona un libro a la lista de libros que
+    fueron publicados en un año especifico.
+    Los años se guardan en un Map, donde la llave es el año
+    y el valor la lista de libros de ese año.
+    """
+    try:
+        years = catalog['obraDate']
+        if (obra['Date'] != ''):
+            fecha = obra['Date']
+            fecha = int(float(fecha))
+        else:
+            fecha = 2020
+        existyear = mp.contains(years, fecha)
+        if existyear:
+            entry = mp.get(years, fecha)
+            year = me.getValue(entry)
+        else:
+            year = newYear2(fecha)
+            mp.put(years, fecha, year)
+        lt.addLast(year['obras'], obra)
+    except Exception:
+        return None
+
+def addObraAcquisition(catalog, obra):
+    """
+    Esta funcion adiciona un libro a la lista de libros que
+    fueron publicados en un año especifico.
+    Los años se guardan en un Map, donde la llave es el año
+    y el valor la lista de libros de ese año.
+    """
+    try:
+        years = catalog['obraAcquisition']
+        if (obra['DateAcquired'] != ''):
+            fecha = obra['DateAcquired']
+            #fecha = int(float(fecha))
+        else:
+            fecha = 'AAAA-MM-DD'
+        existyear = mp.contains(years, fecha)
+        if existyear:
+            entry = mp.get(years, fecha)
+            year = me.getValue(entry)
+        else:
+            year = newYear3(fecha)
+            mp.put(years, fecha, year)
+        lt.addLast(year['obras'], obra)
+    except Exception:
+        return None
 
 def addBook(catalog, book):
     """
@@ -263,21 +358,50 @@ def addBookYear(catalog, book):
         else:
             year = newYear(pubyear)
             mp.put(years, pubyear, year)
-        lt.addLast(year['books'], book)
+        lt.addLast(year['book'], book)
     except Exception:
         return None
-
 
 def newYear(pubyear):
     """
     Esta funcion crea la estructura de libros asociados
     a un año.
     """
+    entry = {'year': "", "artistas": None}
+    entry['year'] = pubyear
+    entry['artistas'] = lt.newList('SINGLE_LINKED', compareYears)
+    return entry
+
+def newYear2(pubyear):
+    """
+    Esta funcion crea la estructura de libros asociados
+    a un año.
+    """
+    entry = {'year': "", "obras": None}
+    entry['year'] = pubyear
+    entry['obras'] = lt.newList('SINGLE_LINKED', compareYears)
+    return entry
+
+def newYear3(pubyear):
+    """
+    Esta funcion crea la estructura de libros asociados
+    a un año.
+    """
+    entry = {'year': "", "obras": None}
+    entry['year'] = pubyear
+    entry['obras'] = lt.newList('SINGLE_LINKED', compareYears2)
+    return entry
+
+"""
+def newYear(pubyear):
+
+    #Esta funcion crea la estructura de libros asociados a un año.
+    
     entry = {'year': "", "books": None}
     entry['year'] = pubyear
     entry['books'] = lt.newList('SINGLE_LINKED', compareYears)
     return entry
-
+"""
 
 def addBookAuthor(catalog, authorname, book):
     """
@@ -335,6 +459,25 @@ def obraporNacionalidad(catalog,nacionalidad):
             lista_nacionalidad.append(artista['Nationality']) 
     return len(lista_nacionalidad)
 
+def concatlist(lst1,lst2):
+    """
+    Recibe dos listas, agrega los elementos de la segunda lista al final de la primera y retorna dicha lista 
+    """
+    for elem in lt.iterator(lst2):
+        lt.addLast(lst1,elem)
+    return lst1
+
+def concatlist2(lst1,lst2):
+    """
+    Recibe dos listas, agrega los elementos de la segunda lista al final de la primera y retorna dicha lista 
+    """
+    if lst2 != None:
+        for elem in lt.iterator(lst2):
+            lt.addLast(lst1,elem)
+        return lst1
+    else:
+        return lst1
+
 # ==============================
 # Funciones de consulta
 # ==============================
@@ -368,6 +511,42 @@ def getObraByArtistaId(catalog, authorid):
     except:
         author = None
     return author 
+
+def getArtistaById(catalog, id):
+    """
+    Retorna los libros publicados en un año
+    """
+    ids = mp.get(catalog['artistaIds'], id)
+    if ids:
+        return me.getValue(ids)
+    return None
+
+def getArtistaByDate(catalog, year):
+    """
+    Retorna los libros publicados en un año
+    """
+    year = mp.get(catalog['artistaDate'], year)
+    if year:
+        return me.getValue(year)['artistas']
+    return None
+
+def getObraByDate(catalog, year):
+    """
+    Retorna los libros publicados en un año
+    """
+    year = mp.get(catalog['obraDate'], year)
+    if year:
+        return me.getValue(year)['obras']
+    return None
+
+def getObraByAcquisition(catalog, year):
+    """
+    Retorna los libros publicados en un año
+    """
+    year = mp.get(catalog['obraAcquisition'], year)
+    if year:
+        return me.getValue(year)['obras']
+    return None
 
 def getBooksByAuthor(catalog, authorname):
     """
@@ -508,6 +687,32 @@ def compareNationalityByName(name, nacionalidad):
     else:
         return -1
 
+def compareArtistaByDate(date,entry):
+    """
+    Compara dos fechas de nacimiento. El primero es una cadena
+    y el segundo un entry de un map
+    """
+    authentry = me.getKey(entry)
+    if (date == authentry):
+        return 0
+    elif (date > authentry):
+        return 1
+    else:
+        return -1
+
+def compareObraByDate(date,entry):
+    """
+    Compara dos fechas de nacimiento. El primero es una cadena
+    y el segundo un entry de un map
+    """
+    authentry = me.getKey(entry)
+    if (date == authentry):
+        return 0
+    elif (date > authentry):
+        return 1
+    else:
+        return -1
+
 def compareMapBookIds(id, entry):
     """
     Compara dos ids de libros, id es un identificador
@@ -574,3 +779,10 @@ def compareYears(year1, year2):
     else:
         return 0
 
+def compareYears2(year1, year2):
+    if (str(year1) == str(year2)):
+        return 0
+    elif (str(year1) > str(year2)):
+        return 1
+    else:
+        return 0
